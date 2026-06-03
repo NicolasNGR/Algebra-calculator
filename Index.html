@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de Álgebra Linear</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f4f0;color:#1a1a1a;min-height:100vh;padding:2rem 1rem}
+  h1{font-size:1.4rem;font-weight:600;margin-bottom:0.25rem}
+  .subtitle{font-size:0.85rem;color:#666;margin-bottom:1.5rem}
+  .container{max-width:760px;margin:0 auto}
+  .tabs{display:flex;gap:8px;margin-bottom:1.5rem}
+  .tab{padding:8px 22px;border:1px solid #ccc;border-radius:8px;cursor:pointer;font-size:14px;background:#fff;color:#555;transition:all .15s}
+  .tab.active{background:#1a1a1a;color:#fff;border-color:#1a1a1a;font-weight:500}
+  .section{display:none}.section.active{display:block}
+  .card{background:#fff;border-radius:12px;border:1px solid #e0ddd5;padding:1.5rem;margin-bottom:1rem}
+  .vec-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .vec-label{font-size:13px;color:#666;width:28px;font-style:italic}
+  input[type=number]{width:68px;padding:6px 8px;border:1px solid #ccc;border-radius:6px;text-align:center;font-size:14px;font-family:inherit;outline:none;transition:border .15s}
+  input[type=number]:focus{border-color:#1a1a1a}
+  .mat-grid{display:grid;grid-template-columns:repeat(2,68px);gap:8px}
+  .result-block{background:#f5f4f0;border-radius:8px;padding:.9rem 1.1rem;margin-top:.75rem}
+  .result-label{font-size:11px;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
+  .result-value{font-size:15px;font-weight:500;font-family:'Courier New',monospace;line-height:2}
+  .step{border-left:2px solid #ddd;padding-left:12px;margin:12px 0}
+  .step-title{font-size:13px;font-weight:600;color:#555;margin-bottom:4px}
+  .step-val{font-size:14px;font-family:'Courier New',monospace;line-height:1.8}
+  .err{color:#c0392b;font-size:14px;margin-top:8px;padding:10px;background:#fdf0ee;border-radius:6px}
+  button.run{margin-top:1rem;padding:9px 26px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit;transition:opacity .15s}
+  button.run:hover{opacity:.82}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  h3{font-size:15px;font-weight:600;margin:0 0 .75rem}
+  .divider{height:1px;background:#e8e6e0;margin:1.25rem 0}
+  .frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;font-family:'Courier New',monospace;font-size:13px;line-height:1.1;margin:0 2px}
+  .frac .num{border-bottom:1.5px solid #1a1a1a;padding:0 4px;text-align:center}
+  .frac .den{padding:0 4px;text-align:center}
+  .hint{font-size:13px;color:#888;margin-bottom:1rem}
+  @media(max-width:500px){.grid3{grid-template-columns:1fr 1fr}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>📐 Calculadora de Álgebra Linear</h1>
+  <p class="subtitle">Gram-Schmidt &amp; Diagonalização — resultados em frações exatas</p>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('gram',this)">Gram-Schmidt</button>
+    <button class="tab" onclick="switchTab('diag',this)">Diagonalização 2×2</button>
+  </div>
+
+  <div id="gram" class="section active">
+    <div class="card">
+      <h3>Ortogonalização de Gram-Schmidt</h3>
+      <p class="hint">Insira 3 vetores em ℝ³</p>
+      <div class="vec-row"><span class="vec-label">u₁ =</span>
+        <input id="u1x" type="number" value="2"><input id="u1y" type="number" value="1"><input id="u1z" type="number" value="1">
+      </div>
+      <div class="vec-row"><span class="vec-label">u₂ =</span>
+        <input id="u2x" type="number" value="1"><input id="u2y" type="number" value="3"><input id="u2z" type="number" value="2">
+      </div>
+      <div class="vec-row"><span class="vec-label">u₃ =</span>
+        <input id="u3x" type="number" value="3"><input id="u3y" type="number" value="1"><input id="u3z" type="number" value="4">
+      </div>
+      <button class="run" onclick="runGram()">Calcular</button>
+    </div>
+    <div id="gram-result"></div>
+  </div>
+
+  <div id="diag" class="section">
+    <div class="card">
+      <h3>Diagonalização de matriz 2×2</h3>
+      <p class="hint">Insira a matriz A</p>
+      <div class="mat-grid">
+        <input id="a11" type="number" value="2"><input id="a12" type="number" value="1">
+        <input id="a21" type="number" value="2"><input id="a22" type="number" value="3">
+      </div>
+      <button class="run" onclick="runDiag()">Calcular</button>
+    </div>
+    <div id="diag-result"></div>
+  </div>
+</div>
+
+<script>
+function switchTab(t,btn){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(t).classList.add('active');
+}
+function gcd(a,b){a=Math.abs(Math.round(a));b=Math.abs(Math.round(b));while(b){[a,b]=[b,a%b]}return a||1}
+function Frac(n,d=1){
+  if(d===0)return{n:0,d:1,val:0,str:'0',html:'0'};
+  const s=Math.sign(n)*Math.sign(d);
+  n=Math.abs(Math.round(n*1e9));d=Math.abs(Math.round(d*1e9));
+  const g=gcd(n,d);n=s*n/g;d=d/g;
+  const html=d===1?`${n}`:`<span class="frac"><span class="num">${n<0?'−'+Math.abs(n):n}</span><span class="den">${d}</span></span>`;
+  return{n,d,val:n/d,str:d===1?`${n}`:`${n}/${d}`,html};
+}
+function fadd(a,b){return Frac(a.n*b.d+b.n*a.d,a.d*b.d)}
+function fsub(a,b){return Frac(a.n*b.d-b.n*a.d,a.d*b.d)}
+function fmul(a,b){return Frac(a.n*b.n,a.d*b.d)}
+function fdiv(a,b){return Frac(a.n*b.d,a.d*b.n)}
+function F(x){return Frac(Math.round(x*1e6),1e6)}
+function dotF(a,b){return fadd(fadd(fmul(a[0],b[0]),fmul(a[1],b[1])),fmul(a[2],b[2]))}
+function projF(u,v){const d=dotF(u,u);if(Math.abs(d.val)<1e-9)return[F(0),F(0),F(0)];const c=fdiv(dotF(v,u),d);return[fmul(c,u[0]),fmul(c,u[1]),fmul(c,u[2])]}
+function subF(a,b){return[fsub(a[0],b[0]),fsub(a[1],b[1]),fsub(a[2],b[2])]}
+function fmtV(v){return`(${v[0].html}, ${v[1].html}, ${v[2].html})`}
+function norm2F(v){return dotF(v,v).val}
+function getId(x){return parseFloat(document.getElementById(x).value)||0}
+function sqrtStr(val){
+  if(val<=0)return'0';
+  const r=Math.round(Math.sqrt(val));
+  if(Math.abs(r*r-val)<1e-6)return`${r}`;
+  return`√${Math.round(val)}`;
+}
+
+function runGram(){
+  const u1=[F(getId('u1x')),F(getId('u1y')),F(getId('u1z'))];
+  const u2=[F(getId('u2x')),F(getId('u2y')),F(getId('u2z'))];
+  const u3=[F(getId('u3x')),F(getId('u3y')),F(getId('u3z'))];
+  const v1=u1;
+  const v2=subF(u2,projF(v1,u2));
+  const v3=subF(subF(u3,projF(v1,u3)),projF(v2,u3));
+  const n1=norm2F(v1),n2=norm2F(v2),n3=norm2F(v3);
+  if(n1<1e-9||n2<1e-9||n3<1e-9){
+    document.getElementById('gram-result').innerHTML='<div class="card"><p class="err">Vetores linearmente dependentes — não formam base.</p></div>';return;
+  }
+  const c12=fdiv(dotF(u2,v1),dotF(v1,v1));
+  const c13=fdiv(dotF(u3,v1),dotF(v1,v1));
+  const c23=fdiv(dotF(u3,v2),dotF(v2,v2));
+  const html=`<div class="card">
+    <div class="step"><div class="step-title">Passo 1 — v₁ = u₁</div><div class="step-val">${fmtV(v1)}</div></div>
+    <div class="step"><div class="step-title">Passo 2 — v₂ = u₂ − (u₂·v₁ / ‖v₁‖²)·v₁</div>
+      <div class="step-val" style="font-size:13px;color:#888">coeficiente = ${c12.html}</div>
+      <div class="step-val">${fmtV(v2)}</div></div>
+    <div class="step"><div class="step-title">Passo 3 — v₃ = u₃ − proj₁ − proj₂</div>
+      <div class="step-val" style="font-size:13px;color:#888">coef₁ = ${c13.html} &nbsp;|&nbsp; coef₂ = ${c23.html}</div>
+      <div class="step-val">${fmtV(v3)}</div></div>
+    <div class="divider"></div>
+    <p style="font-size:13px;font-weight:600;margin-bottom:8px">Base ortogonal {v₁, v₂, v₃}</p>
+    <div class="grid3">
+      <div class="result-block"><div class="result-label">v₁</div><div class="result-value">${fmtV(v1)}</div></div>
+      <div class="result-block"><div class="result-label">v₂</div><div class="result-value">${fmtV(v2)}</div></div>
+      <div class="result-block"><div class="result-label">v₃</div><div class="result-value">${fmtV(v3)}</div></div>
+    </div>
+    <div class="divider"></div>
+    <p style="font-size:13px;font-weight:600;margin-bottom:8px">Normas</p>
+    <div class="grid3">
+      <div class="result-block"><div class="result-label">‖v₁‖</div><div class="result-value">${sqrtStr(n1)}</div></div>
+      <div class="result-block"><div class="result-label">‖v₂‖</div><div class="result-value">${sqrtStr(n2)}</div></div>
+      <div class="result-block"><div class="result-label">‖v₃‖</div><div class="result-value">${sqrtStr(n3)}</div></div>
+    </div>
+  </div>`;
+  document.getElementById('gram-result').innerHTML=html;
+}
+
+function runDiag(){
+  const a=getId('a11'),b=getId('a12'),c=getId('a21'),d=getId('a22');
+  const tr=a+d,det=a*d-b*c,disc=tr*tr-4*det;
+  if(disc<0){document.getElementById('diag-result').innerHTML='<div class="card"><p class="err">Discriminante negativo — autovalores complexos (não diagonalizável em ℝ).</p></div>';return;}
+  const sqD=Math.sqrt(disc),sqDstr=sqrtStr(disc);
+  const l1=(tr+sqD)/2,l2=(tr-sqD)/2;
+  const Fl1=F(l1),Fl2=F(l2);
+  function eigvecF(lam){
+    const FlA=F(a-lam),FlD=F(d-lam),Fb=F(b),Fc=F(c);
+    if(Math.abs(b)>1e-9){const v=fdiv(Frac(-FlA.n,FlA.d),Fb);return[v,F(1)]}
+    if(Math.abs(c)>1e-9){const v=fdiv(Frac(-FlD.n,FlD.d),Fc);return[F(1),v]}
+    return[F(1),F(0)];
+  }
+  const v1=eigvecF(l1),v2=eigvecF(l2);
+  const detB=v1[0].val*v2[1].val-v2[0].val*v1[1].val;
+  let binvHtml='<span style="color:#c0392b">B não inversível</span>';
+  if(Math.abs(detB)>1e-9){
+    const Fd=F(detB);
+    const i11=fdiv(F(v2[1].val),Fd),i12=fdiv(F(-v2[0].val),Fd);
+    const i21=fdiv(F(-v1[1].val),Fd),i22=fdiv(F(v1[0].val),Fd);
+    binvHtml=`[ ${i11.html} &nbsp; ${i12.html} ]<br>[ ${i21.html} &nbsp; ${i22.html} ]`;
+  }
+  const trF=F(tr),detF=F(det);
+  document.getElementById('diag-result').innerHTML=`<div class="card">
+    <p style="font-size:13px;color:#888;margin-bottom:4px">Polinômio característico: λ² − ${trF.html}λ + ${detF.html} = 0</p>
+    <p style="font-size:13px;color:#888">Δ = ${F(disc).html} &nbsp;→&nbsp; √Δ = ${sqDstr}</p>
+    <div class="divider"></div>
+    <p style="font-size:13px;font-weight:600;margin-bottom:8px">A) Autovalores</p>
+    <div class="grid2">
+      <div class="result-block"><div class="result-label">λ₁ = (${trF.html} + ${sqDstr}) / 2</div><div class="result-value">${Fl1.html}</div></div>
+      <div class="result-block"><div class="result-label">λ₂ = (${trF.html} − ${sqDstr}) / 2</div><div class="result-value">${Fl2.html}</div></div>
+    </div>
+    <div class="divider"></div>
+    <p style="font-size:13px;font-weight:600;margin-bottom:8px">B) Autovetores</p>
+    <div class="grid2">
+      <div class="result-block"><div class="result-label">v₁ (λ₁ = ${Fl1.html})</div><div class="result-value">(${v1[0].html}, ${v1[1].html})</div></div>
+      <div class="result-block"><div class="result-label">v₂ (λ₂ = ${Fl2.html})</div><div class="result-value">(${v2[0].html}, ${v2[1].html})</div></div>
+    </div>
+    <div class="divider"></div>
+    <p style="font-size:13px;font-weight:600;margin-bottom:8px">C) Matrizes D, B e B⁻¹ &nbsp;(A = B·D·B⁻¹)</p>
+    <div class="grid3">
+      <div class="result-block"><div class="result-label">D (diagonal)</div><div class="result-value">[ ${Fl1.html} &nbsp; 0 ]<br>[ 0 &nbsp; ${Fl2.html} ]</div></div>
+      <div class="result-block"><div class="result-label">B (autovetores nas colunas)</div><div class="result-value">[ ${v1[0].html} &nbsp; ${v2[0].html} ]<br>[ ${v1[1].html} &nbsp; ${v2[1].html} ]</div></div>
+      <div class="result-block"><div class="result-label">B⁻¹</div><div class="result-value">${binvHtml}</div></div>
+    </div>
+  </div>`;
+}
+</script>
+</body>
+</html>
