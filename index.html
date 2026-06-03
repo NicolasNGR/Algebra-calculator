@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Calculadora de Álgebra Linear</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{font-family:'Segoe UI',system-ui,sans-serif;background:#f5f4f0;color:#1a1a1a;min-height:100vh;padding:2rem 1rem}
+  h1{font-size:1.4rem;font-weight:600;margin-bottom:0.25rem}
+  .subtitle{font-size:0.85rem;color:#666;margin-bottom:1.5rem}
+  .container{max-width:800px;margin:0 auto}
+  .tabs{display:flex;gap:8px;margin-bottom:1.5rem;flex-wrap:wrap}
+  .tab{padding:8px 18px;border:1px solid #ccc;border-radius:8px;cursor:pointer;font-size:14px;background:#fff;color:#555;transition:all .15s}
+  .tab.active{background:#1a1a1a;color:#fff;border-color:#1a1a1a;font-weight:500}
+  .section{display:none}.section.active{display:block}
+  .card{background:#fff;border-radius:12px;border:1px solid #e0ddd5;padding:1.5rem;margin-bottom:1rem}
+  .vec-row{display:flex;gap:8px;align-items:center;margin-bottom:8px}
+  .vec-label{font-size:13px;color:#666;width:28px;font-style:italic}
+  input[type=number]{width:62px;padding:6px 8px;border:1px solid #ccc;border-radius:6px;text-align:center;font-size:14px;font-family:inherit;outline:none;transition:border .15s}
+  input[type=number]:focus{border-color:#1a1a1a}
+  .mat-grid2{display:grid;grid-template-columns:repeat(2,62px);gap:8px}
+  .mat-grid3{display:grid;grid-template-columns:repeat(3,62px);gap:8px}
+  .result-block{background:#f5f4f0;border-radius:8px;padding:.9rem 1.1rem;margin-top:.75rem}
+  .result-label{font-size:11px;color:#888;margin-bottom:4px;text-transform:uppercase;letter-spacing:.05em}
+  .result-value{font-size:14px;font-weight:500;font-family:'Courier New',monospace;line-height:2}
+  .step{border-left:2px solid #ddd;padding-left:12px;margin:12px 0}
+  .step-title{font-size:13px;font-weight:600;color:#555;margin-bottom:4px}
+  .step-val{font-size:14px;font-family:'Courier New',monospace;line-height:1.8}
+  .err{color:#c0392b;font-size:14px;margin-top:8px;padding:10px;background:#fdf0ee;border-radius:6px}
+  button.run{margin-top:1rem;padding:9px 26px;background:#1a1a1a;color:#fff;border:none;border-radius:8px;font-size:14px;cursor:pointer;font-family:inherit;transition:opacity .15s}
+  button.run:hover{opacity:.82}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
+  h3{font-size:15px;font-weight:600;margin:0 0 .75rem}
+  .divider{height:1px;background:#e8e6e0;margin:1.25rem 0}
+  .frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;font-family:'Courier New',monospace;font-size:12px;line-height:1.1;margin:0 2px}
+  .frac .num{border-bottom:1.5px solid #1a1a1a;padding:0 3px;text-align:center}
+  .frac .den{padding:0 3px;text-align:center}
+  .hint{font-size:13px;color:#888;margin-bottom:1rem}
+  @media(max-width:500px){.grid3{grid-template-columns:1fr 1fr}.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>📐 Calculadora de Álgebra Linear</h1>
+  <p class="subtitle">Gram-Schmidt &amp; Diagonalização 2×2 e 3×3 — resultados em frações exatas</p>
+
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('gram',this)">Gram-Schmidt</button>
+    <button class="tab" onclick="switchTab('diag2',this)">Diagonalização 2×2</button>
+    <button class="tab" onclick="switchTab('diag3',this)">Diagonalização 3×3</button>
+  </div>
+
+  <div id="gram" class="section active">
+    <div class="card">
+      <h3>Ortogonalização de Gram-Schmidt</h3>
+      <p class="hint">Insira 3 vetores em ℝ³</p>
+      <div class="vec-row"><span class="vec-label">u₁ =</span>
+        <input id="u1x" type="number" value="2"><input id="u1y" type="number" value="1"><input id="u1z" type="number" value="1">
+      </div>
+      <div class="vec-row"><span class="vec-label">u₂ =</span>
+        <input id="u2x" type="number" value="1"><input id="u2y" type="number" value="3"><input id="u2z" type="number" value="2">
+      </div>
+      <div class="vec-row"><span class="vec-label">u₃ =</span>
+        <input id="u3x" type="number" value="3"><input id="u3y" type="number" value="1"><input id="u3z" type="number" value="4">
+      </div>
+      <button class="run" onclick="runGram()">Calcular</button>
+    </div>
+    <div id="gram-result"></div>
+  </div>
+
+  <div id="diag2" class="section">
+    <div class="card">
+      <h3>Diagonalização de matriz 2×2</h3>
+      <p class="hint">Insira a matriz A</p>
+      <div class="mat-grid2">
+        <input id="a11" type="number" value="2"><input id="a12" type="number" value="1">
+        <input id="a21" type="number" value="2"><input id="a22" type="number" value="3">
+      </div>
+      <button class="run" onclick="runDiag2()">Calcular</button>
+    </div>
+    <div id="diag2-result"></div>
+  </div>
+
+  <div id="diag3" class="section">
+    <div class="card">
+      <h3>Diagonalização de matriz 3×3</h3>
+      <p class="hint">Insira a matriz A</p>
+      <div class="mat-grid3">
+        <input id="b11" type="number" value="4"><input id="b12" type="number" value="1"><input id="b13" type="number" value="0">
+        <input id="b21" type="number" value="2"><input id="b22" type="number" value="3"><input id="b23" type="number" value="0">
+        <input id="b31" type="number" value="0"><input id="b32" type="number" value="0"><input id="b33" type="number" value="2">
+      </div>
+      <button class="run" onclick="runDiag3()">Calcular</button>
+    </div>
+    <div id="diag3-result"></div>
+  </div>
+</div>
+
+<script>
+function gcd(a,b){a=Math.abs(Math.round(a));b=Math.abs(Math.round(b));while(b){[a,b]=[b,a%b]}return a||1}
+function Frac(n,d){
+  d=d===undefined?1:d;
+  if(Math.abs(d)<1e-12)return{n:0,d:1,val:0,html:'0'};
+  const s=Math.sign(n)*Math.sign(d);
+  n=Math.abs(Math.round(n*1e8));d=Math.abs(Math.round(d*1e8));
+  const g=gcd(n,d);n=s*n/g;d=d/g;
+  const html=d===1?`${n}`:`<span class="frac"><span class="num">${n<0?'−'+Math.abs(n):n}</span><span class="den">${d}</span></span>`;
+  return{n,d,val:n/d,html};
+}
+function F(x){return Frac(Math.round(x*1e7),1e7)}
+function fadd(a,b){return Frac(a.n*b.d+b.n*a.d,a.d*b.d)}
+function fsub(a,b){return Frac(a.n*b.d-b.n*a.d,a.d*b.d)}
+function fmul(a,b){return Frac(a.n*b.n,a.d*b.d)}
+function fdiv(a,b){return Frac(a.n*b.d,a.d*b.n)}
+function sqrtStr(val){
+  if(val<0)return null;
+  const r=Math.round(Math.sqrt(val));
+  if(Math.abs(r*r-val)<1e-6)return`${r}`;
+  return`√${Math.round(val)}`;
+}
+function getId(x){return parseFloat(document.getElementById(x).value)||0}
+function switchTab(t,btn){
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById(t).classList.add('active');
+}
+
+// Gram-Schmidt
+function dotF(a,b){return fadd(fadd(fmul(a[0],b[0]),fmul(a[1],b[1])),fmul(a[2],b[2]))}
+function projF(u,v){const d=dotF(u,u);if(Math.abs(d.val)<1e-9)return[F(0),F(0),F(0)];const c=fdiv(dotF(v,u),d);return[fmul(c,u[0]),fmul(c,u[1]),fmul(c,u[2])]}
+function subVF(a,b){return[fsub(a[0],b[0]),fsub(a[1],b[1]),fsub(a[2],b[2])]}
+function fmtV(v){return`(${v[0].html}, ${v[1].html}, ${v[2].html})`}
+function norm2F(v){return dotF(v,v).val}
+
+function runGram(){
+  const u1=[F(getId('u1x')),F(getId('u1y')),F(getId('u1z'))];
+  const u2=[F(getId('u2x')),F(getId('u2y')),F(getId('u2z'))];
+  const u3=[F(getId('u3x')),F(getId('u3y')),F(getId('u3z'))];
+  const v1=u1;
+  const v2=subVF(u2,projF(v1,u2));
+  const v3=subVF(subVF(u3,projF(v1,u3)),projF(v2,u3));
+  const n1=norm2F(v1),n2=norm2F(v2),n3=norm2F(v3);
+  if(n1<1e-9||n2<1e-9||n3<1e-9){
+    document.getElementById('gram-result').innerHTML='<div class="card"><p class="err">Vetores linearmente dependentes.</p></div>';return;
+  }
+  const c12=fdiv(dotF(u2,v1),dotF(v1,v1));
+  const c13=fdiv(dotF(u3,v1),dotF(v1,v1));
+  const c23=fdiv(dotF(u3,v2),dotF(v2,v2));
+  document.getElementById('gram-result').innerHTML=`<div class="card">
+    <div class="step"><div class="step-title">Passo 1 — v₁ = u₁</div><div class="step-val">${fmtV(v1)}</div></div>
+    <div class="step"><div class="step-title">Passo 2 — v₂ = u₂ − (${c12.html})·v₁</div><div class="step-val">${fmtV(v2)}</div></div>
+    <div class="step"><div class="step-title">Passo 3 — v₃ = u₃ − (${c13.html})·v₁ − (${c23.html})·v₂</div><div class="step-val">${fmtV(v3)}</div></div>
+    <div class="divider"></div>
+    <p style="font-size:13px;font-weight:600;margin-bottom:8px">Base ortogonal</p>
+    <div class="grid3">
+      <div class="result-block"><div class="result-label">v₁</div><div class="result-value">${fmtV(v1)}</div></div>
+      <div class="result-block"><div class="result-label">v₂</div><div class="result-value">${fmtV(v2)}</div></div>
+      <div class="result-block"><div class="result-label">v₃</div><div class="result-value">${fmtV(v3)}</div></div>
+    </div>
+    <div class="divider"></div>
+    <p style="font-size:13px;font-weight:600;margin-bottom:8px">Normas</p>
+    <div class="grid3">
+      <div class="result-block"><div class="result-label">‖v₁‖</div><div class="result-value">${sqrtStr(n1)}</div></div>
+      <div class="result-block"><div class="result-label">‖v₂‖</div><div class="result-value">${sqrtStr(n2)}</div></div>
+      <div class="result-block"><div class="result-label">‖v₃‖</div><div class="result-value">${sqrtStr(n3)}</div></div>
+    </div>
+  </div>`;
+}
+
+// Diagonalização 2×2
+function runDiag2(){
+  const a=getId('a11'),b=getId('a12'),c=getId('a21'),d=getId('a22');
+  const tr=a+d,det=a*d-b*c,disc=tr*tr-4*det;
+  if(disc<0){document.getElementById('diag2-result').innerHTML='<div class="card"><p class="err">Discriminante negativo — autovalores complexos.</p></div>';return;}
+  const sqD=Math.sqrt(disc),sqDs=sqrtStr(disc);
+  const l1=(tr+sqD)/2,l2=(tr-sqD)/2;
+  const Fl1=F(l1),Fl2=F(l2);
+  function eig2(lam){
+    const fa=F(a-lam),fb=F(b),fc=F(c),fd=F(d-lam);
+    if(Math.abs(b)>1e-9)return[fdiv(Frac(-fa.n,fa.d),fb),F(1)];
+    if(Math.abs(c)>1e-9)return[F(1),fdiv(Frac(-fd.n,fd.d),fc)];
+    return[F(1),F(0)];
+  }
+  const v1=eig2(l1),v2=eig2(l2);
+  const detB=v1[0].val*v2[1].val-v2[0].val*v1[1].val;
+  let binv='<span style="color:#c0392b">Não inversível</span>';
+  if(Math.abs(detB)>1e-9){
+    const Fd=F(detB);
+    const i11=fdiv(F(v2[1].val),Fd),i12=fdiv(F(-v2[0].val),Fd);
+    const i21=fdiv(F(-v1[1].val),Fd),i22=fdiv(F(v1[0].val),Fd);
+    binv=`[ ${i11.html} &nbsp; ${i12.html} ]<br>[ ${i21.html} &nbsp; ${i22.html} ]`;
+  }
+  const Ftr=F(tr),Fdet=F(det),Fdisc=F(disc);
+  document.getElementById('diag2-result').innerHTML=`<div class="card">
+    <p style="font-size:13px;color:#888;margin-bottom:4px">λ² − ${Ftr.html}λ + ${Fdet.html} = 0 &nbsp;|&nbsp; Δ = ${Fdisc.html} → √Δ = ${sqDs}</p>
+    <div class="divider"></div>
+    <p style="font-size:13px;font-weight:600;margin-bottom:8px">A) Autovalores</p>
+    <div class="grid2">
+      <div class="result-block"><div class="result-label">λ₁ = (${Ftr.html} + ${sqDs}) / 2</div><div class="result-value">${Fl1.html}</div></div>
+      <div class="result-block"><div class="result-label">λ₂ = (${Ftr.html} − ${sqDs}) / 2</div><div class="result-value">${Fl2.html}</div></div>
+    </div>
+    <div class="divider"></div>
+    <p style="font-size:13px;font-weight:600;margin-bottom:8px">B) Autovetores</p>
+    <div class="grid2">
+      <div class="result-block"><div class="result-label">v₁ (λ₁=${Fl1.html})</div><div class="result-value">(${v1[0].html}, ${v1[1].html})</div></div>
+      <div class="result-block"><div class="result-label">v₂ (λ₂=${Fl2.html})</div><div class="result-value">(${v2[0].html}, ${v2[1].html})</div></div>
+    </div>
+    <div class="divider"></div>
+    <p style="font-size:13px;font-weight:600;margin-bottom:8px">C) Matrizes D, B e B⁻¹</p>
+    <div class="grid3">
+      <div class="result-block"><div class="result-label">D</div><div class="result-value">[ ${Fl1.html} &nbsp; 0 ]<br>[ 0 &nbsp; ${Fl2.html} ]</div></div>
+      <div class="result-block"><div class="result-label">B</div><div class="result-value">[ ${v1[0].html} &nbsp; ${v2[0].html} ]<br>[ ${v1[1].html} &nbsp; ${v2[1].html} ]</div></div>
+      <div class="result-block"><div class="result-label">B⁻¹</div><div class="result-value">${binv}</div></div>
+    </div>
+  </div>`;
+}
+
+// Diagonalização 3×3
+function det3(m){
+  return m[0][0]*(m[1][1]*m[2][2]-m[1][2]*m[2][1])
+        -m[0][1]*(m[1][0]*m[2][2]-m[1][2]*m[2][0])
+        +m[0][2]*(m[1][0]*m[2][1]-m[1][1]*m[2][0]);
+}
+function mat3sub(m,lam){return[[m[0][0]-lam,m[0][1],m[0][2]],[m[1][0],m[1][1]-lam,m[1][2]],[m[2][0],m[2][1],m[2][2]-lam]]}
+
+function solveCubic(a,b,c,d){
+  b/=a;c/=a;d/=a;
+  const p=c-b*b/3,q=2*b*b*b/27-b*c/3+d;
+  const D=q*q/4+p*p*p/27;
+  let roots=[];
+  if(D>1e-8){
+    const u=Math.cbrt(-q/2+Math.sqrt(D)),v=Math.cbrt(-q/2-Math.sqrt(D));
+    roots=[u+v-b/3];
+  } else if(D>-1e-8){
+    const u=Math.cbrt(-q/2);
+    roots=[2*u-b/3,-u-b/3,-u-b/3];
+  } else {
+    const r=Math.sqrt(-p*p*p/27),ang=Math.acos(Math.max(-1,Math.min(1,-q/(2*r))));
+    const m2=2*Math.cbrt(r);
+    roots=[m2*Math.cos(ang/3)-b/3,m2*Math.cos((ang+2*Math.PI)/3)-b/3,m2*Math.cos((ang+4*Math.PI)/3)-b/3];
+  }
+  return roots;
+}
+
+function nullspace3(m){
+  const A=m.map(r=>[...r]);
+  let pivotCols=[],r=0;
+  for(let c=0;c<3&&r<3;c++){
+    let maxR=r;
+    for(let i=r+1;i<3;i++) if(Math.abs(A[i][c])>Math.abs(A[maxR][c])) maxR=i;
+    if(Math.abs(A[maxR][c])<1e-7) continue;
+    [A[r],A[maxR]]=[A[maxR],A[r]];
+    const s=A[r][c];
+    for(let j=0;j<3;j++) A[r][j]/=s;
+    for(let i=0;i<3;i++) if(i!==r){const f=A[i][c];for(let j=0;j<3;j++) A[i][j]-=f*A[r][j];}
+    pivotCols.push(c);r++;
+  }
+  const freeCols=[0,1,2].filter(c=>!pivotCols.includes(c));
+  if(freeCols.length===0) return[[0,0,0]];
+  return freeCols.map(fc=>{
+    const v=[0,0,0];v[fc]=1;
+    pivotCols.forEach((pc,i)=>{v[pc]=-A[i][fc];});
+    return v;
+  });
+}
+
+function inv3F(m){
+  const dv=det3(m.map(r=>r.map(x=>x.val)));
+  if(Math.abs(dv)<1e-9) return null;
+  const Fd=F(dv);
+  const adj=[
+    [fsub(fmul(m[1][1],m[2][2]),fmul(m[1][2],m[2][1])),fsub(fmul(m[0][2],m[2][1]),fmul(m[0][1],m[2][2])),fsub(fmul(m[0][1],m[1][2]),fmul(m[0][2],m[1][1]))],
+    [fsub(fmul(m[1][2],m[2][0]),fmul(m[1][0],m[2][2])),fsub(fmul(m[0][0],m[2][2]),fmul(m[0][2],m[2][0])),fsub(fmul(m[0][2],m[1][0]),fmul(m[0][0],m[1][2]))],
+    [fsub(fmul(m[1][0],m[2][1]),fmul(m[1][1],m[2][0])),fsub(fmul(m[0][1],m[2][0]),fmul(m[0][0],m[2][1])),fsub(fmul(m[0][0],m[1][1]),fmul(m[0][1],m[1][0]))]
+  ];
+  return adj.map(row=>row.map(x=>fdiv(x,Fd)));
+}
+
+function matDisplay(rows){
+  return rows.map(r=>`[ ${r.map(x=>x.html).join(' &nbsp; ')} ]`).join('<br>');
+}
+
+function runDiag3(){
+  const M=[
+    [getId('b11'),getId('b12'),getId('b13')],
+    [getId('b21'),getId('b22'),getId('b23')],
+    [getId('b31'),getId('b32'),getId('b33')]
+  ];
+  const tr=M[0][0]+M[1][1]+M[2][2];
+  const detM=det3(M);
+  const m2=M[0][0]*M[1][1]-M[0][1]*M[1][0]+M[0][0]*M[2][2]-M[0][2]*M[2][0]+M[1][1]*M[2][2]-M[1][2]*M[2][1];
+  const rawRoots=solveCubic(1,-tr,m2,-detM);
+  function snap(r){
+    for(const c of[Math.round(r),Math.round(r*2)/2,Math.round(r*4)/4]) if(Math.abs(c-r)<1e-5) return c;
+    return r;
+  }
+  const roots=rawRoots.map(snap);
+  const uniq=[];
+  roots.forEach(r=>{if(!uniq.some(u=>Math.abs(u-r)<1e-5)) uniq.push(r);});
+  uniq.sort((a,b)=>b-a);
+  const Fl=uniq.map(F);
+
+  const eigvecs=uniq.map(lam=>nullspace3(mat3sub(M,lam)).map(v=>v.map(F)));
+  const allVecs=eigvecs.flat();
+  if(allVecs.length<3){
+    document.getElementById('diag3-result').innerHTML='<div class="card"><p class="err">Matriz não diagonalizável em ℝ (menos de 3 autovetores LI).</p></div>';return;
+  }
+  const Bcols=allVecs.slice(0,3);
+  const Bmat=[[Bcols[0][0],Bcols[1][0],Bcols[2][0]],[Bcols[0][1],Bcols[1][1],Bcols[2][1]],[Bcols[0][2],Bcols[1][2],Bcols[2][2]]];
+  const Dvals=[];
+  eigvecs.forEach((vs,i)=>vs.forEach(()=>Dvals.push(Fl[i])));
+  const Binv=inv3F(Bmat);
+  const binvHtml=Binv?matDisplay(Binv):'<span style="color:#c0392b">Não inversível</span>';
+
+  let eigHtml='';
+  uniq.forEach((lam,i)=>{
+    eigHtml+=`<div class="result-block" style="margin-bottom:8px">
+      <div class="result-label">λ = ${Fl[i].html} &nbsp;(multiplicidade geométrica: ${eigvecs[i].length})</div>
+      ${eigvecs[i].map(v=>`<div class="result-value">(${v[0].html}, ${v[1].html}, ${v[2].html})</div>`).join('')}
+    </div>`;
+  });
+
+  document.getElementById('diag3-result').innerHTML=`<div class="card">
+    <p style="font-size:13px;color:#888;margin-bottom:4px">λ³ − ${F(tr).html}λ² + ${F(m2).html}λ − ${F(detM).html} = 0</p>
+    <div class="divider"></div>
+    <p style="font-size:13px;font-weight:600;margin-bottom:8px">A) Autovalores</p>
+    <div class="grid3">${uniq.map((lam,i)=>`<div class="result-block"><div class="result-label">λ${i+1}</div><div class="result-value">${Fl[i].html}</div></div>`).join('')}</div>
+    <div class="divider"></div>
+    <p style="font-size:13px;font-weight:600;margin-bottom:8px">B) Autovetores</p>
+    ${eigHtml}
+    <div class="divider"></div>
+    <p style="font-size:13px;font-weight:600;margin-bottom:8px">C) Matrizes D, B e B⁻¹ &nbsp;(A = B·D·B⁻¹)</p>
+    <div class="grid2">
+      <div class="result-block"><div class="result-label">D (diagonal)</div><div class="result-value">[ ${Dvals[0].html} &nbsp; 0 &nbsp; 0 ]<br>[ 0 &nbsp; ${Dvals[1].html} &nbsp; 0 ]<br>[ 0 &nbsp; 0 &nbsp; ${Dvals[2].html} ]</div></div>
+      <div class="result-block"><div class="result-label">B (autovetores nas colunas)</div><div class="result-value">${matDisplay(Bmat)}</div></div>
+    </div>
+    <div class="result-block" style="margin-top:10px"><div class="result-label">B⁻¹</div><div class="result-value">${binvHtml}</div></div>
+  </div>`;
+}
+</script>
+</body>
+</html>
